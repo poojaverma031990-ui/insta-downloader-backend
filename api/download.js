@@ -2,7 +2,6 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    // 1. Force clear CORS verification for web standard responses
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -13,14 +12,12 @@ module.exports = async (req, res) => {
     if (!url) return res.status(400).json({ error: 'Target URL parameter is required.' });
 
     try {
-        // 2. FIXED URL CLEANER: Safely extracts the clean text link without crashing
-        const rawUrl = String(url);
-        let cleanUrl = rawUrl.split('?')[0]; 
+        // Safe string cleaner mapping without causing runtime string errors
+        let cleanUrl = String(url).split('?')[0]; 
         if (!cleanUrl.endsWith('/')) {
             cleanUrl += '/';
         }
         
-        // 3. Requesting down the open API pipeline
         const apiResponse = await axios.get(`https://mdgspace.org{encodeURIComponent(cleanUrl)}`, {
             headers: {
                 'Accept': 'application/json',
@@ -31,17 +28,13 @@ module.exports = async (req, res) => {
 
         const data = apiResponse.data;
 
-        // 4. Fallback Extraction Logic Layout
         let extractedVideoUrl = null;
         if (data && data.url) {
             extractedVideoUrl = data.url;
         } else if (data && data.data && data.data.url) {
             extractedVideoUrl = data.data.url;
-        } else if (Array.isArray(data) && data[0] && data[0].url) {
-            extractedVideoUrl = data[0].url;
         }
 
-        // 5. Structure unified flat data package to send to HTML
         const payload = {
             success: true,
             videoUrl: extractedVideoUrl,
